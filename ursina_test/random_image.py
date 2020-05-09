@@ -27,6 +27,8 @@ def ensure_enough_random_images(width: int, height: int, count:int, path:Path) -
         for i in range(to_get):
             urllib.request.urlretrieve(f'https://picsum.photos/{width}/{height}',
                                        str(full_path.joinpath(f'{existing + i}.jpg')))
+            remaining = to_get - i
+            print(f'Downloading ... {remaining=}')
     return list(full_path.glob('*'))
 
 
