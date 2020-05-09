@@ -8,7 +8,7 @@ app = Ursina()
 
 class Voxel(Button):
     def __init__(self, position=(0,0,0)):
-        texture = Texture(random_image(width=200, height=200, path=Path(application.textures_folder)))
+        texture = Texture(random_image(width=200, height=200, path=Path(application.textures_folder), minimum_count=30))
         super().__init__(
             parent = scene,
             position = position,
@@ -40,6 +40,10 @@ def input(key):
     if key == 'escape':
         print('Bye')
         application.quit()
+    elif key == 'scroll up':
+        player.y += 2
+    elif key == 'scroll down':
+        player.y -= 2
     return
 
 
