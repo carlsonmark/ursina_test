@@ -1,2 +1,7 @@
 # Project exclude paths
 /venv/
+models/*.blend*
+models_compressed/*.obj
+textures/random
+textures/*.jpg
+textures/*.png

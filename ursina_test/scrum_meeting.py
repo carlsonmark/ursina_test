@@ -9,22 +9,41 @@ app = Ursina()
 objects = {}
 
 
-class Voxel(Button):
-    def __init__(self, position=(0, 0, 0), texture='white_cube'):
-        super().__init__(
-            parent=scene,
-            position=position,
-            model='cube',
-            origin=Vec3(0, 0, 0),
-            texture=texture,
-            color=color.color(0, 0, random.uniform(.9, 1.0)),
-            #highlight_color=color.lime,
-        )
+def set_if_not_exists(d, key, value):
+    """
+    Set an item in a dictionary if it does not exist.
+    """
+    if key not in d:
+        d[key] = value
+    return
+
+
+class ScrumParticipant(Button):
+    def __init__(self, name: str, image: str='random', **kwargs):
+        self.participant_name = name
+        self.participant_image = image
+        set_if_not_exists(kwargs, 'position', Vec3(0, 0, 0))
+        set_if_not_exists(kwargs, 'model', 'cube')
+        set_if_not_exists(kwargs, 'origin', Vec3(0, 0, 0))
+        set_if_not_exists(kwargs, 'texture', None)
+        set_if_not_exists(kwargs, 'color', color.color(0, 0, random.uniform(.9, 1.0)))
+        kwargs['texture'] = self.which_texture(kwargs['texture'])
+        super().__init__(parent=scene, **kwargs)
         # Maximum rotation speed in degrees per second?
         self.max_rotation_speed = 100
         self._rotation_speed = Vec3(0, 0, 0)
         self.rotate_randomly()
         return
+
+    def which_texture(self, possible_texture):
+        if possible_texture is not None:
+            texture = possible_texture
+        elif self.participant_image == 'random':
+            texture = Texture(
+                random_image(width=200, height=200, path=Path(application.textures_folder), minimum_count=30))
+        else:
+            texture = Texture(self.participant_image)
+        return texture
 
     @property
     def rotation_speed(self):
@@ -53,13 +72,9 @@ class Voxel(Button):
             if key == 'left mouse down':
                 scrum_list = objects['scrum_list']
                 scrum_list.select_participant('next')
-                self.rotate_randomly()
-                self.texture = scrum_list.selected_participant_texture()
             if key == 'right mouse down':
                 scrum_list = objects['scrum_list']
                 scrum_list.select_participant('previous')
-                self.rotate_randomly()
-                self.texture = scrum_list.selected_participant_texture()
         return
 
     def update(self):
@@ -69,19 +84,17 @@ class Voxel(Button):
         return
 
 
-Participant = namedtuple('Participant', ['name', 'image'])
-
-
 class ScrumList(Text):
     ALL_PARTICIPANTS = [
-        Participant(name='Mark', image='textures/mark.jpg'),
-        Participant(name='Pablo', image='textures/pablo.png'),
-        Participant(name='Scott', image='textures/scott.png'),
-        Participant(name='Narinder', image='textures/narinder.jpg'),
-        Participant(name='Iain', image='textures/iain.png'),
-        Participant(name='Darby', image='textures/darby.png'),
-        Participant(name='Anna', image='textures/anna.jpg'),
-        Participant(name='Jannalie', image='random'),
+        {'name':'Mark', 'model': 'untitled', 'image': 'textures/untitled.png'},
+        # {'name':'Mark', 'image':'textures/mark.jpg'},
+        {'name': 'Pablo', 'image': 'textures/pablo.png'},
+        {'name': 'Scott', 'image': 'textures/scott.png'},
+        {'name': 'Narinder', 'image': 'textures/narinder.jpg'},
+        {'name': 'Iain', 'image': 'textures/iain.png'},
+        {'name': 'Darby', 'image': 'textures/darby.png'},
+        {'name': 'Anna', 'image': 'textures/anna.jpg'},
+        {'name': 'Jannalie', 'image': 'random'},
     ]
 
     def __init__(self):
@@ -114,6 +127,7 @@ class ScrumList(Text):
         elif self.current_participant >= total:
             self.current_participant = 0
         self.set_text_for_current_participant()
+        self.show_selected_participant()
         return
 
     def set_text_for_current_participant(self):
@@ -122,20 +136,20 @@ class ScrumList(Text):
         for participant in self.shuffled_participants:
             if i == self.current_participant:
                 text += f'*** '
-            text += f'{participant.name}\n'
+            text += f'{participant["name"]}\n'
             i += 1
         self.text = text
         self.create_background()
         return
 
-    def selected_participant_texture(self):
-        participant = self.shuffled_participants[self.current_participant]
-        if participant.image == 'random':
-            texture = Texture(
-                random_image(width=200, height=200, path=Path(application.textures_folder), minimum_count=30))
-        else:
-            texture = Texture(participant.image)
-        return texture
+    def show_selected_participant(self):
+        current_participant_entity = objects.get('participant', None)
+        if current_participant_entity:
+            destroy(current_participant_entity)
+        current_participant = self.shuffled_participants[self.current_participant]
+        kwargs = deepcopy(current_participant)
+        objects['participant'] = ScrumParticipant(**kwargs)
+        return
 
 
 DEBUG = False
@@ -167,8 +181,7 @@ def init():
     window.exit_button.visible = False
     scrum_list = ScrumList()
     objects['scrum_list'] = scrum_list
-    objects['voxel'] = Voxel(position=(0, 0, 0),
-                             texture=scrum_list.selected_participant_texture())
+    scrum_list.show_selected_participant()
     return
 
 
@@ -182,8 +195,8 @@ def input(key):
     elif key == 'scroll down':
         camera.z -= 2
     elif key == 'space':
-        camera.look_at(objects['voxel'].origin)
-        objects['voxel'].rotate_randomly()
+        camera.look_at(objects['participant'].origin)
+        objects['participant'].rotate_randomly()
     return
 
 
