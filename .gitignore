@@ -1,7 +1,7 @@
 # Project exclude paths
 /venv/
-models/*.blend*
-models_compressed/*.obj
-textures/random
-textures/*.jpg
-textures/*.png
+ursina_test/models/*.blend*
+ursina_test/models_compressed/*.obj
+ursina_test/textures/random
+ursina_test/textures/*.jpg
+ursina_test/textures/*.png
