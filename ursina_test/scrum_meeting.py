@@ -86,20 +86,27 @@ class ScrumParticipant(Button):
 
 class ScrumList(Text):
     ALL_PARTICIPANTS = [
-        {'name':'Mark', 'model': 'untitled', 'image': 'textures/untitled.png'},
+        #{'name':'Mark', 'model': 'untitled', 'image': 'textures/untitled.png'},
         # {'name':'Mark', 'image':'textures/mark.jpg'},
+        # {'name':'Mark', 'image':'textures/blinking-lego.mp4'},
+        {'name':'Mark', 'image':'textures/simpsons-climbing.mp4'},
+        # {'name':'Mark', 'image':'textures/dan-osmond.mp4'},
+        # {'name':'Neal', 'image':'textures/neal.jpg'},
         {'name': 'Pablo', 'image': 'textures/pablo.png'},
         {'name': 'Scott', 'image': 'textures/scott.png'},
         {'name': 'Narinder', 'image': 'textures/narinder.jpg'},
         {'name': 'Iain', 'image': 'textures/iain.png'},
         {'name': 'Darby', 'image': 'textures/darby.png'},
-        {'name': 'Anna', 'image': 'textures/anna.jpg'},
-        {'name': 'Jannalie', 'image': 'random'},
+        # {'name': 'Anna', 'image': 'textures/anna.jpg'},
+        {'name': 'Anna', 'model': 'indoor plant_02', 'image': 'textures/anna.jpg'},
+        # {'name': 'Anna', 'model': 'indoor plant_02', 'color': color.green},
+        {'name': 'Jannalie', 'image': 'textures/jannalie.jpg'},
     ]
 
     def __init__(self):
         self.current_participant = 0
         self.shuffled_participants = deepcopy(self.ALL_PARTICIPANTS)
+        self.preload_models()
         random.shuffle(self.shuffled_participants)
         super().__init__(text='',
                          name='scrum_list',
@@ -112,6 +119,18 @@ class ScrumList(Text):
                          color=color.green.tint(-.2),
                          )
         self.set_text_for_current_participant()
+        return
+
+    def preload_models(self):
+        """
+        Create .ursinamesh files for all of the models so they load faster next time.
+        """
+        for d in self.ALL_PARTICIPANTS:
+            model = d.get('model', None)
+            if model:
+                print(f'loading model: {model}')
+                load_model(model)
+
         return
 
     def select_participant(self, which='next'):
