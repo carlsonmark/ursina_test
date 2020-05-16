@@ -6,6 +6,9 @@ from ursina import *
 from random_image import random_image
 from cheers import CheerScoreboard
 
+USE_SLACK_BOT = True
+slack_thread = None
+
 app = Ursina()
 
 objects = {}
@@ -88,21 +91,21 @@ class ScrumParticipant(Button):
 
 class ScrumList(Text):
     ALL_PARTICIPANTS = [
-        #{'name':'Mark', 'model': 'untitled', 'image': 'textures/untitled.png'},
-        # {'name':'Mark', 'image':'textures/mark.jpg'},
-        # {'name':'Mark', 'image':'textures/blinking-lego.mp4'},
-        {'name':'Mark', 'image':'textures/simpsons-climbing.mp4'},
-        # {'name':'Mark', 'image':'textures/dan-osmond.mp4'},
-        # {'name':'Neal', 'image':'textures/neal.jpg'},
-        {'name': 'Pablo', 'image': 'textures/pablo.png'},
-        {'name': 'Scott', 'image': 'textures/scott.png'},
-        {'name': 'Narinder', 'image': 'textures/narinder.jpg'},
-        {'name': 'Iain', 'image': 'textures/iain.png'},
-        {'name': 'Darby', 'image': 'textures/darby.png'},
-        # {'name': 'Anna', 'image': 'textures/anna.jpg'},
-        {'name': 'Anna', 'model': 'indoor plant_02', 'image': 'textures/anna.jpg'},
-        # {'name': 'Anna', 'model': 'indoor plant_02', 'color': color.green},
-        {'name': 'Jannalie', 'image': 'textures/jannalie.jpg'},
+        # {'name': 'Mark Carlson', 'model': 'untitled', 'image': 'textures/untitled.png'},
+        # {'name': 'Mark Carlson', 'image': 'textures/mark.jpg'},
+        # {'name': 'Mark Carlson', 'image': 'textures/blinking-lego.mp4'},
+        {'name': 'Mark Carlson', 'image': 'textures/simpsons-climbing.mp4'},
+        # {'name': 'Mark Carlson', 'image':'textures/dan-osmond.mp4'},
+        # {'name': 'Neal', 'image':'textures/neal.jpg'},
+        {'name': 'Pablo De Biase', 'image': 'textures/pablo.png'},
+        {'name': 'Scott Ho', 'image': 'textures/scott.png'},
+        {'name': 'Narinder Singh', 'image': 'textures/narinder.jpg'},
+        {'name': 'Iain Barkley', 'image': 'textures/iain.png'},
+        {'name': 'Darby McGraw', 'image': 'textures/darby.png'},
+        # {'name': 'Anna Chaykovska', 'image': 'textures/anna.jpg'},
+        # {'name': 'Anna Chaykovska', 'model': 'indoor plant_02', 'image': 'textures/anna.jpg'},
+        # {'name': 'Anna Chaykovska', 'model': 'indoor plant_02', 'color': color.green},
+        {'name': 'Jannalie Taylor', 'image': 'textures/jannalie.jpg'},
     ]
 
     def __init__(self):
@@ -203,14 +206,26 @@ def set_debug_text(text: str):
 
 
 def init():
+    global slack_thread
     # Create a single cube
     Text.default_resolution = 1080 * Text.size
     window.exit_button.visible = False
     scrum_list = ScrumList()
     objects['scrum_list'] = scrum_list
     scrum_list.show_selected_participant()
-    cheer_scoreboard = CheerScoreboard(attendees=scrum_list.attendee_names())
-    objects['cheer_scoreboard'] = cheer_scoreboard
+    if USE_SLACK_BOT:
+        from slack_bot import init as slack_bot_init
+        from slack_bot import user_info
+        slack_bot_init(objects)
+        info = user_info()
+        names = scrum_list.attendee_names()
+        attendees = {}
+        for name in names:
+            for username in info.keys():
+                if name == info[username]:
+                    attendees[info[username]] = username
+        cheer_scoreboard = CheerScoreboard(attendees=attendees)
+        objects['cheer_scoreboard'] = cheer_scoreboard
     return
 
 
@@ -218,6 +233,9 @@ def input(key):
     print(f'{key=}')
     if key == 'escape':
         print('Bye')
+        if USE_SLACK_BOT:
+            from slack_bot import stop
+            stop()
         application.quit()
     elif key == 'scroll up':
         camera.z += 2

@@ -9,3 +9,4 @@ ursina_test/textures/*.gif
 ursina_test/textures/*.mp4
 ursina_test/cheer.json
 ursina_test/cheer.json.bak
+ursina_test/slack_bot_token.txt

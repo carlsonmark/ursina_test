@@ -23,11 +23,12 @@ def save_cheer_data(cheer_data: Dict):
 
 
 class CheerScoreboard(Text):
-    def __init__(self, attendees: List[str]):
+    def __init__(self, attendees: Dict[str,str]):
         self._sort_key = 'cheer_available'
         self._cheer_data = load_cheer_data()
-        for attendee in attendees:
-            self.add_attendee(attendee)
+        for name in attendees.keys():
+            username = attendees[name]
+            self.add_attendee(username, name)
         super().__init__(text='',
                          name='cheer',
                          position=window.bottom_right,
@@ -46,11 +47,12 @@ class CheerScoreboard(Text):
         self.update_cheer_text()
         return
 
-    def add_attendee(self, attendee: str):
-        if not attendee in self._cheer_data:
-            self._cheer_data[attendee] = {
+    def add_attendee(self, username, name: str):
+        if not username in self._cheer_data:
+            self._cheer_data[username] = {
                 "cheer_available": 0,
-                "cheer_given": 0
+                "cheer_given": 0,
+                "name": name
             }
         return
 
@@ -94,9 +96,9 @@ class CheerScoreboard(Text):
                                 key=lambda item: self._cheer_data[item][self._sort_key]))
         text = 'Name   Points   Given\n'
         text += '-----+--------+------\n'
-        for participant_name in order:
-            participant = self._cheer_data[participant_name]
-            text += f'{participant_name} | {participant["cheer_available"]:6} | {participant["cheer_given"]:5}\n'
+        for username in order:
+            participant = self._cheer_data[username]
+            text += f'{participant["name"]} | {participant["cheer_available"]:6} | {participant["cheer_given"]:5}\n'
         self.text = text
         self.create_background()
         return
