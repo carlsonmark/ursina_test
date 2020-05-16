@@ -4,7 +4,7 @@ from typing import List
 
 from ursina import *
 from random_image import random_image
-from cheers import CheerScoreboard
+from cheers import CheerScoreboard, cheers_textures
 
 USE_SLACK_BOT = True
 slack_thread = None
@@ -216,7 +216,7 @@ def init():
     if USE_SLACK_BOT:
         from slack_bot import init as slack_bot_init
         from slack_bot import user_info
-        slack_bot_init(objects)
+        slack_bot_init(objects, textures=cheers_textures)
         info = user_info()
         names = scrum_list.attendee_names()
         attendees = {}
@@ -253,6 +253,8 @@ def input(key):
         objects['cheer_scoreboard'].set_sort_key("cheer_available")
     elif key == '2':
         objects['cheer_scoreboard'].set_sort_key("cheer_given")
+    elif key == 'c':
+        objects['cheer_scoreboard'].add_cheers(10, 'textures/cheers/star')
     return
 
 

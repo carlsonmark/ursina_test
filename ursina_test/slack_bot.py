@@ -4,7 +4,7 @@ from slack import RTMClient
 from slack import WebClient
 from slack.errors import SlackApiError
 import threading
-from typing import Dict
+from typing import Dict, List
 
 SLACK_TOKEN = open('slack_bot_token.txt').read().strip()
 MENTION_REGEX = "^<@(|[WU].+?)>(.*)"
@@ -17,10 +17,14 @@ users_list = {}
 # The thread that the slack bot is running in
 thread = None
 
+# All of the available textures (set elsewhere)
+cheers_textures = []
 
-def init(ursina_objects):
-    global thread, objects, web_client, users_list
+
+def init(ursina_objects, textures:List[str]):
+    global thread, objects, web_client, users_list, cheers_textures
     objects = ursina_objects
+    cheers_textures = textures
     thread = SlackThread()
     thread.start()
     web_client = WebClient(SLACK_TOKEN)
@@ -45,6 +49,15 @@ def user_info() -> Dict[str, str]:
     return info
 
 
+def help_text() -> str:
+    s = 'Usage:\n'
+    s += '@Scrum Bot give @<user> <points> <texture>\n'
+    s += 'Currently available cheers textures:\n'
+    for name in cheers_textures:
+        s += f'- {name}\n'
+    return s
+
+
 # It does not look like there is a way to have this be a member of SlackThread, since 'self' will never
 # be passed to the method
 @RTMClient.run_on(event='message')
@@ -54,13 +67,32 @@ def handle_message(**payload):
     web_client = payload['web_client']
     rtm_client = payload['rtm_client']
     text = data.get('text', '')
-    give_matches = re.search(r'give\s<@(?P<give_to>\S*)>\s(?P<how_much>[0-9]+)', text)
+    give_matches = re.search(r'give\s<@(?P<give_to>\S*)>\s(?P<how_much>[0-9]+)\s*(?P<texture>\S*)?', text)
     if give_matches:
         name_from = users_list[data['user']]['name']
         name_to = users_list[give_matches.group('give_to')]['name']
         points = int(give_matches.group('how_much'))
+        texture = give_matches.group('texture')
         print(f'Giving {points} from {name_from} to {name_to}')
-        objects['cheer_scoreboard'].transfer_points(name_from, name_to, points)
+        objects['cheer_scoreboard'].transfer_points(name_from, name_to, points, texture=texture)
+    elif 'help' in text:
+        text = help_text()
+        channel_id = data['channel']
+        thread_ts = data['ts']
+        user = data['user']
+
+        try:
+            response = web_client.chat_postMessage(
+                channel=channel_id,
+                text=text,
+                thread_ts=thread_ts
+            )
+        except SlackApiError as e:
+            # You will get a SlackApiError if "ok" is False
+            assert e.response["ok"] is False
+            assert e.response["error"]  # str like 'invalid_auth', 'channel_not_found'
+            print(f"Got an error: {e.response['error']}")
+
     return
 
 
