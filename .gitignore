@@ -5,3 +5,7 @@ ursina_test/models_compressed/*.obj
 ursina_test/textures/random
 ursina_test/textures/*.jpg
 ursina_test/textures/*.png
+ursina_test/textures/*.gif
+ursina_test/textures/*.mp4
+ursina_test/cheer.json
+ursina_test/cheer.json.bak

@@ -1,8 +1,10 @@
 from collections import namedtuple
 from copy import deepcopy
+from typing import List
 
 from ursina import *
 from random_image import random_image
+from cheers import CheerScoreboard
 
 app = Ursina()
 
@@ -117,9 +119,15 @@ class ScrumList(Text):
                          # origin=(0, 0),
                          # scale = (.05, .025),
                          color=color.green.tint(-.2),
+                         font='VeraMono.ttf'
                          )
         self.set_text_for_current_participant()
         return
+
+    def attendee_names(self) -> List[str]:
+        return list(set(
+            [p['name'] for p in self.ALL_PARTICIPANTS]
+        ))
 
     def preload_models(self):
         """
@@ -201,6 +209,8 @@ def init():
     scrum_list = ScrumList()
     objects['scrum_list'] = scrum_list
     scrum_list.show_selected_participant()
+    cheer_scoreboard = CheerScoreboard(attendees=scrum_list.attendee_names())
+    objects['cheer_scoreboard'] = cheer_scoreboard
     return
 
 
@@ -216,6 +226,15 @@ def input(key):
     elif key == 'space':
         camera.look_at(objects['participant'].origin)
         objects['participant'].rotate_randomly()
+    elif key == 'g':
+        objects['cheer_scoreboard'].give_everyone_points(5)
+    elif key == 't':
+        # deleteme
+        objects['cheer_scoreboard'].transfer_points('Mark', 'Scott', 5)
+    elif key == '1':
+        objects['cheer_scoreboard'].set_sort_key("cheer_available")
+    elif key == '2':
+        objects['cheer_scoreboard'].set_sort_key("cheer_given")
     return
 
 
